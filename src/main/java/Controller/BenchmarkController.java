@@ -19,7 +19,7 @@ public class BenchmarkController
 
             //Connection zur DB aufbauen
             Connection con = DriverManager.getConnection(
-                    "jdbc:sqlserver://LAP-BOCHOLT233\\SQLEXPRESS:1433;database=DBI;encrypt=true;trustServerCertificate=true;useBulkCopyForBatchInsert=true;",
+                    "jdbc:sqlserver://192.168.178.21\\SQLEXPRESS:1433;database=DBI;encrypt=true;trustServerCertificate=true;useBulkCopyForBatchInsert=true;",
                     "dbi",
                     "dbi_pass"
             );
@@ -27,6 +27,12 @@ public class BenchmarkController
             con.setAutoCommit(false);
 
             Statement stmt = con.createStatement();
+
+            //Falls Werte vorhanden werden, werden diese aus den Tabellen gelöscht
+            stmt.execute("DROP TABLE dbi.history;");
+            stmt.execute("DROP TABLE dbi.accounts;");
+            stmt.execute("DROP TABLE dbi.tellers;");
+            stmt.execute("DROP TABLE dbi.branches;");
 
             //Falls Tabellen in DB noch nicht existieren, werden diese erstellt
             //Befehl Create Table IF Not Exists gibt es nicht, daher IF Abfrage in SQL
@@ -76,11 +82,7 @@ public class BenchmarkController
                         """);
 
 
-            //Falls Werte vorhanden werden, werden diese aus den Tabellen gelöscht
-            stmt.execute("DELETE FROM dbi.history;");
-            stmt.execute("DELETE FROM dbi.accounts;");
-            stmt.execute("DELETE FROM dbi.tellers;");
-            stmt.execute("DELETE FROM dbi.branches;");
+
 
             stmt.close();
 
@@ -106,9 +108,9 @@ public class BenchmarkController
                 rowsCounterBatch++;
 
                 preparedStatementBranch.setInt      (1, i);
-                preparedStatementBranch.setString   (2, randomString(20));
+                preparedStatementBranch.setString   (2, "AAAAAAAAAAAAAAAAAAAA");
                 preparedStatementBranch.setInt      (3, 0);
-                preparedStatementBranch.setString   (4, randomString(72));
+                preparedStatementBranch.setString   (4, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 
                 preparedStatementBranch.addBatch();
 
@@ -135,9 +137,9 @@ public class BenchmarkController
                 rowsCounterBatch++;
 
                 preparedStatementAccounts.setInt      (1, i);
-                preparedStatementAccounts.setString   (2, randomString(20));
+                preparedStatementAccounts.setString   (2, "AAAAAAAAAAAAAAAAAAAA");
                 preparedStatementAccounts.setInt      (3, 0);
-                preparedStatementAccounts.setString   (4, randomString(68));
+                preparedStatementAccounts.setString   (4, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                 preparedStatementAccounts.setInt      (5, randomBranchID(n));
 
                 preparedStatementAccounts.addBatch();
@@ -165,9 +167,9 @@ public class BenchmarkController
                 rowsCounterBatch++;
 
                 preparedStatementTeller.setInt      (1, i);
-                preparedStatementTeller.setString   (2, randomString(20));
+                preparedStatementTeller.setString   (2, "AAAAAAAAAAAAAAAAAAAA");
                 preparedStatementTeller.setInt      (3, 0);
-                preparedStatementTeller.setString   (4, randomString(68));
+                preparedStatementTeller.setString   (4, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                 preparedStatementTeller.setInt      (5, randomBranchID(n));
 
                 preparedStatementTeller.addBatch();

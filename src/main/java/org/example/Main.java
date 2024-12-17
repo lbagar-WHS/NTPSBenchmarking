@@ -37,6 +37,10 @@ public class Main
      * n=10 -> 19s
      * n=20 -> 42s
      * n=50 -> 118s
+     * optimiertes Programm DB auf LAN Rechner:
+     * n=10 -> 20s
+     * n=20 -> 35s
+     * n=50 -> 80s
      */
 
     public static void main(String[] args)
