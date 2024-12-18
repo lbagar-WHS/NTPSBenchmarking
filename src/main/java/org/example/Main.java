@@ -34,9 +34,9 @@ public class Main
      * batch alle 1000 Rows, SQL Befehle nicht zwischenspeichern = n=1 -> 2s, n=10 -> 19s --> deutliche Performance Verbesserung
      *
      * optimiertes Programm DB auf lokalem Rechner:
-     * n=10 -> 19s
-     * n=20 -> 42s
-     * n=50 -> 118s
+     * n=10 -> 17s
+     * n=20 -> 31s
+     * n=50 -> 76s
      * optimiertes Programm DB auf LAN Rechner:
      * n=10 -> 20s
      * n=20 -> 35s

@@ -19,7 +19,7 @@ public class BenchmarkController
 
             //Connection zur DB aufbauen
             Connection con = DriverManager.getConnection(
-                    "jdbc:sqlserver://192.168.178.21\\SQLEXPRESS:1433;database=DBI;encrypt=true;trustServerCertificate=true;useBulkCopyForBatchInsert=true;",
+                    "jdbc:sqlserver://LAP-BOCHOLT233\\SQLEXPRESS:1433;database=DBI;encrypt=true;trustServerCertificate=true;useBulkCopyForBatchInsert=true;",
                     "dbi",
                     "dbi_pass"
             );
@@ -80,9 +80,6 @@ public class BenchmarkController
                         foreign key (tellerid) references tellers,
                         foreign key (branchid) references branches );
                         """);
-
-
-
 
             stmt.close();
 
