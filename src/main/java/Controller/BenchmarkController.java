@@ -29,15 +29,14 @@ public class BenchmarkController
             Statement stmt = con.createStatement();
 
             //Falls Werte vorhanden werden, werden diese aus den Tabellen gelöscht
-            stmt.execute("DROP TABLE dbi.history;");
-            stmt.execute("DROP TABLE dbi.accounts;");
-            stmt.execute("DROP TABLE dbi.tellers;");
-            stmt.execute("DROP TABLE dbi.branches;");
+            stmt.execute("DROP TABLE IF EXISTS dbi.history;");
+            stmt.execute("DROP TABLE IF EXISTS dbi.accounts;");
+            stmt.execute("DROP TABLE IF EXISTS dbi.tellers;");
+            stmt.execute("DROP TABLE IF EXISTS dbi.branches;");
 
             //Falls Tabellen in DB noch nicht existieren, werden diese erstellt
             //Befehl Create Table IF Not Exists gibt es nicht, daher IF Abfrage in SQL
             stmt.execute("""
-                        IF(OBJECT_ID('branches') IS NULL)
                         create table dbi.branches
                         (branchid int not null,
                         branchname char(20) not null,
@@ -46,7 +45,6 @@ public class BenchmarkController
                         primary key (branchid) );""");
 
             stmt.execute("""
-                        IF(OBJECT_ID('accounts') IS NULL)
                         create table dbi.accounts
                         ( accid int not null,
                         name char(20) not null,
@@ -57,7 +55,6 @@ public class BenchmarkController
                         foreign key (branchid) references branches );""");
 
             stmt.execute("""
-                        IF(OBJECT_ID('tellers') IS NULL)
                         create table dbi.tellers
                         ( tellerid int not null,
                         tellername char(20) not null,
@@ -68,7 +65,6 @@ public class BenchmarkController
                         foreign key (branchid) references branches );""");
 
             stmt.execute("""
-                        IF(OBJECT_ID('history') IS NULL)
                         create table dbi.history
                         ( accid int not null,
                         tellerid int not null,
