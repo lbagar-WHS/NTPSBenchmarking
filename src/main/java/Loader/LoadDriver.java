@@ -8,9 +8,6 @@ public class LoadDriver
     {
         try
         {
-            //JDBC Treiber im Classpath hinzufügen
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-
             //Connection zur DB aufbauen
             Connection con = DriverManager.getConnection(
                     "jdbc:sqlserver://LAP-BOCHOLT233\\SQLEXPRESS:1433;database=DBI;encrypt=true;trustServerCertificate=true;useBulkCopyForBatchInsert=true;",
@@ -61,7 +58,7 @@ public class LoadDriver
 
             System.out.println("Finished Benchmarking...");
         }
-        catch(InterruptedException | ClassNotFoundException | SQLException e)
+        catch(InterruptedException | SQLException e)
         {
             throw new RuntimeException(e);
         }

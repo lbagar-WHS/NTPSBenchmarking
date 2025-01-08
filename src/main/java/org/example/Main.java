@@ -66,15 +66,17 @@ public class Main
 
             switch (option)
             {
-                case 1:     initDB(scanner);
-                case 2:     deleteHistoryEntries();
-                case 3:     startBenchmarking();
-                case 4:     testBenchmarkingMethod();
-                case 5:     System.out.println("Programm wird beendet");
-                default:    System.out.println("Falsche Eingabe");
+                case 1:     initDB(scanner); break;
+                case 2:     deleteHistoryEntries(); break;
+                case 3:     startBenchmarking(); break;
+                case 4:     testBenchmarkingMethod(); break;
+                case 5:     System.out.println("Programm wird beendet"); break;
+                default:    System.out.println("Falsche Eingabe"); break;
             }
         }
         while (option != 5);
+
+        scanner.close();
     }
 
     private static void testBenchmarkingMethod()

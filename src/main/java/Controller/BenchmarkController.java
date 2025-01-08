@@ -14,7 +14,7 @@ public class BenchmarkController
         {
             System.out.println("Daten werden aus HISTORY entfernt");
 
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            //Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
             //Connection zur DB aufbauen
             Connection con = DriverManager.getConnection(
@@ -48,7 +48,7 @@ public class BenchmarkController
 
             System.out.println("Daten aus HISTORY entfernt");
         }
-        catch (ClassNotFoundException | SQLException e)
+        catch (SQLException e)
         {
             throw new RuntimeException(e);
         }
