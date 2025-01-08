@@ -7,11 +7,60 @@ import java.util.Random;
 
 public class BenchmarkController
 {
+    public void deleteHistoryEntries()
+    {
+        //JDBC Treiber im Classpath hinzufügen
+        try
+        {
+            System.out.println("Daten werden aus HISTORY entfernt");
+
+            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+
+            //Connection zur DB aufbauen
+            Connection con = DriverManager.getConnection(
+                    "jdbc:sqlserver://LAP-BOCHOLT233\\SQLEXPRESS:1433;database=DBI;encrypt=true;trustServerCertificate=true",
+                    "dbi",
+                    "dbi_pass"
+            );
+
+            con.setAutoCommit(false);
+
+            Statement stmt = con.createStatement();
+
+            //Falls Werte vorhanden werden, werden diese aus den Tabellen gelöscht
+            stmt.execute("DROP TABLE IF EXISTS dbi.history;");
+            stmt.execute("""
+                        create table dbi.history
+                        ( accid int not null,
+                        tellerid int not null,
+                        delta int not null,
+                        branchid int not null,
+                        accbalance int not null,
+                        cmmnt char(30) not null,
+                        foreign key (accid) references accounts,
+                        foreign key (tellerid) references tellers,
+                        foreign key (branchid) references branches );
+                        """);
+
+            con.commit();
+            stmt.close();
+            con.close();
+
+            System.out.println("Daten aus HISTORY entfernt");
+        }
+        catch (ClassNotFoundException | SQLException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void initDB(int n)
     {
         //try Block um ClassNotFoundException und SQLException abzufangen
         try
         {
+            System.out.println("Start init DB");
+
             int anzahlRowBatch      = 1000;
 
             //JDBC Treiber im Classpath hinzufügen
@@ -19,7 +68,7 @@ public class BenchmarkController
 
             //Connection zur DB aufbauen
             Connection con = DriverManager.getConnection(
-                    "jdbc:sqlserver://LAP-BOCHOLT233\\SQLEXPRESS:1433;database=DBI;encrypt=true;trustServerCertificate=true;useBulkCopyForBatchInsert=true;",
+                    "jdbc:sqlserver://LAP-BOCHOLT233\\SQLEXPRESS:1433;database=DBI;encrypt=true;trustServerCertificate=true",
                     "dbi",
                     "dbi_pass"
             );
@@ -111,6 +160,7 @@ public class BenchmarkController
                 {
                     rowsCounterBatch = 0;
                     preparedStatementBranch.executeBatch();
+                    con.commit();
                 }
             }
 
@@ -118,9 +168,12 @@ public class BenchmarkController
             {
                 rowsCounterBatch = 0;
                 preparedStatementBranch.executeBatch();
+                con.commit();
             }
 
             preparedStatementBranch.close();
+
+            System.out.println("Branches hinzugefügt");
 
             //Tupel für accounts hinzufügen
             PreparedStatement preparedStatementAccounts = con.prepareStatement("INSERT INTO dbi.accounts (accid, name, balance, address, branchid) VALUES (?, ?, ?, ?, ?)");
@@ -141,6 +194,8 @@ public class BenchmarkController
                 {
                     rowsCounterBatch = 0;
                     preparedStatementAccounts.executeBatch();
+                    con.commit();
+                    //System.out.println("Anzahl Accounts hinzugefügt: " + i);
                 }
             }
 
@@ -148,9 +203,12 @@ public class BenchmarkController
             {
                 rowsCounterBatch = 0;
                 preparedStatementAccounts.executeBatch();
+                con.commit();
             }
 
             preparedStatementAccounts.close();
+
+            System.out.println("Accounts hinzugefügt");
 
             //Tupel für tellers hinzufügen
             PreparedStatement preparedStatementTeller = con.prepareStatement("INSERT INTO dbi.tellers (tellerid, tellername, balance, address, branchid) VALUES (?, ?, ?, ?, ?)");
@@ -171,15 +229,19 @@ public class BenchmarkController
                 {
                     rowsCounterBatch = 0;
                     preparedStatementTeller.executeBatch();
+                    con.commit();
                 }
             }
 
             if(rowsCounterBatch > 0)
             {
                 preparedStatementTeller.executeBatch();
+                con.commit();
             }
 
             preparedStatementTeller.close();
+
+            System.out.println("Tellers hinzugefügt");
 
             long durationMili = System.currentTimeMillis() - startTimeMili;
 

@@ -1,6 +1,9 @@
 package org.example;
 
 import Controller.BenchmarkController;
+import Loader.LoadDriver;
+
+import java.util.Scanner;
 
 public class Main
 {
@@ -45,9 +48,64 @@ public class Main
 
     public static void main(String[] args)
     {
-        System.out.println("Starting Benchmark Example");
+        Scanner scanner = new Scanner(System.in);  // Create a Scanner object
+        int option = -1;
+
+        do
+        {
+            System.out.println("Welche der folgenden Operationen soll ausgeführt werden:");
+            System.out.println("(1): ntps-Datenbank erstellen");
+            System.out.println("(2): Einträge in HISTORY Tabelle löschen");
+            System.out.println("(3): Lastentest starten");
+            System.out.println("(4): Testdurchlauf");
+            System.out.println("(5): Programm beenden");
+
+            System.out.println();
+
+            option = scanner.nextInt();
+
+            switch (option)
+            {
+                case 1:     initDB(scanner);
+                case 2:     deleteHistoryEntries();
+                case 3:     startBenchmarking();
+                case 4:     testBenchmarkingMethod();
+                case 5:     System.out.println("Programm wird beendet");
+                default:    System.out.println("Falsche Eingabe");
+            }
+        }
+        while (option != 5);
+    }
+
+    private static void testBenchmarkingMethod()
+    {
+        LoadDriver driver = new LoadDriver();
+
+        driver.testExecuteFunction();
+    }
+
+    private static void startBenchmarking()
+    {
+        LoadDriver driver = new LoadDriver();
+
+        driver.startBenchmarking();
+    }
+
+    private static void deleteHistoryEntries()
+    {
         BenchmarkController controller = new BenchmarkController();
 
-        controller.initDB(50);
+        controller.deleteHistoryEntries();
+    }
+
+    private static void initDB(Scanner scanner)
+    {
+        System.out.println("Wert für n: ");
+
+        BenchmarkController controller = new BenchmarkController();
+
+        int n = scanner.nextInt();
+
+        controller.initDB(n);
     }
 }
