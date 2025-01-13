@@ -1,10 +1,34 @@
 package Loader;
 
 import java.sql.*;
+import java.util.Random;
 
-public class LoadDriver
+public class LoadDriver implements Runnable
 {
-    public void startBenchmarking()
+    private final Random random;
+    private String name = "";
+
+    public static int totalAnzahlEinzahlungenTransactions = 0;
+    public static int totalKontostandTransactions = 0;
+    public static int totalEinzahlungTransactions = 0;
+
+    private boolean isMessphase = false;
+
+    private PreparedStatement getKontostandPrepared;
+    private PreparedStatement updateBrancheBalancePrepared;
+    private PreparedStatement updateTellerBalancePrepared;
+    private PreparedStatement updateAccountBalancePrepared;
+    private PreparedStatement insertTransactionIntoHistoryPrepared;
+
+    private PreparedStatement getAnzahlEinzahlungPrepared;
+
+    public LoadDriver(String name, int seed)
+    {
+        this.name   = name;
+        this.random = new Random(seed);
+    }
+
+    public void run()
     {
         try
         {
@@ -17,51 +41,64 @@ public class LoadDriver
 
             con.setAutoCommit(false);
 
-            System.out.println("Starting Benchmarking...");
+            System.out.println("LoadDriver " + name + ": Starting Benchmarking...");
+
+            getKontostandPrepared                   = con.prepareStatement("SELECT balance FROM ACCOUNTS WHERE ACCID = ?");
+
+            updateBrancheBalancePrepared            = con.prepareStatement("UPDATE BRANCHES SET balance = balance + ? WHERE BRANCHID = ?");
+            updateTellerBalancePrepared             = con.prepareStatement("UPDATE TELLERS  SET balance = balance + ? WHERE TELLERID = ?");
+            updateAccountBalancePrepared            = con.prepareStatement("UPDATE ACCOUNTS SET balance = balance + ? WHERE ACCID    = ?");
+            insertTransactionIntoHistoryPrepared    = con.prepareStatement("INSERT INTO HISTORY (ACCID, TELLERID, DELTA, BRANCHID, ACCBALANCE, CMMNT) VALUES(?, ?, ?, ?, ?, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')");
+
+            getAnzahlEinzahlungPrepared             = con.prepareStatement("SELECT COUNT(*) FROM history WHERE delta = ?");
 
             long starttime              = System.currentTimeMillis();
-            int countTransaktions       = 0;
             boolean isEinschwingphase   = true;
-            boolean isMessphase         = false;
-            boolean isAusschwingphase   = false;
 
             while ((System.currentTimeMillis() - starttime) <= 600000)
             {
                 if(isMessphase && (System.currentTimeMillis() - starttime) >= 540000)
                 {
                     isMessphase         = false;
-                    isAusschwingphase   = true;
 
-                    System.out.println("Messphase wurde beendet, Ausschwingphase gestartet...");
-                    System.out.println("Anzahl Transaktionen insgesamt: " + countTransaktions);
-                    System.out.println("Anzahl Transaktionen pro Sekunde Durchschnitt: " + countTransaktions /5 /60);
+                    System.out.println("LoadDriver " + name + ": Messphase wurde beendet, Ausschwingphase gestartet...");
                 }
                 else if(isEinschwingphase && (System.currentTimeMillis() - starttime) >= 240000)
                 {
+                    resetTotalTransactions();
+
                     isMessphase         = true;
                     isEinschwingphase   = false;
 
-                    System.out.println("Messphase wird gestartet...");
+                    System.out.println("LoadDriver " + name + ": Messphase wurde gestartet...");
                 }
 
                 executeRandomFunction(con);
 
-                if(isMessphase)
-                {
-                    countTransaktions++;
-                }
-
                 Thread.sleep(50);
             }
 
+            getKontostandPrepared.close();
+            updateBrancheBalancePrepared.close();
+            updateTellerBalancePrepared.close();
+            updateAccountBalancePrepared.close();
+            insertTransactionIntoHistoryPrepared.close();
+            getAnzahlEinzahlungPrepared.close();
             con.close();
 
-            System.out.println("Finished Benchmarking...");
+            System.out.println("LoadDriver " + name + ": Finished Benchmarking...");
         }
         catch(InterruptedException | SQLException e)
         {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void resetTotalTransactions()
+    {
+        totalEinzahlungTransactions         = 0;
+        totalKontostandTransactions         = 0;
+        totalAnzahlEinzahlungenTransactions = 0;
     }
 
     private void executeRandomFunction(Connection con) throws SQLException
@@ -70,16 +107,24 @@ public class LoadDriver
 
         if(random < 0.15)
         {
-            getAnzahlEinzahlung(con, getRandomInt(10000));
+            getAnzahlEinzahlung(getRandomInt(10000));
+
+            totalAnzahlEinzahlungenTransactions++;
         }
-        else if(random < 0.35)
+        else if(random < 0.5)
         {
-            getKontostand(con, getRandomInt(10000000));
+            getKontostand(getRandomInt(10000000));
+
+            totalKontostandTransactions++;
         }
         else
         {
-            insertEinzahlung(con, getRandomInt(10000000), getRandomInt(1000), getRandomInt(100), getRandomInt(10000));
+            insertEinzahlung(getRandomInt(10000000), getRandomInt(1000), getRandomInt(100), getRandomInt(10000));
+
+            totalEinzahlungTransactions++;
         }
+
+        con.commit();
     }
 
     public void testExecuteFunction()
@@ -96,17 +141,31 @@ public class LoadDriver
                     "dbi_pass"
             );
 
+            getKontostandPrepared                   = con.prepareStatement("SELECT balance FROM ACCOUNTS WHERE ACCID = ?");
+            updateBrancheBalancePrepared            = con.prepareStatement("UPDATE BRANCHES SET balance = balance + ? WHERE BRANCHID = ?");
+            updateTellerBalancePrepared             = con.prepareStatement("UPDATE TELLERS  SET balance = balance + ? WHERE TELLERID = ?");
+            updateAccountBalancePrepared            = con.prepareStatement("UPDATE ACCOUNTS SET balance = balance + ? WHERE ACCID    = ?");
+            insertTransactionIntoHistoryPrepared    = con.prepareStatement("INSERT INTO HISTORY (ACCID, TELLERID, DELTA, BRANCHID, ACCBALANCE, CMMNT) VALUES(?, ?, ?, ?, ?, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')");
+            getAnzahlEinzahlungPrepared             = con.prepareStatement("SELECT COUNT(*) FROM history WHERE delta = ?");
+
             con.setAutoCommit(false);
 
-            System.out.println("Kontostand Account 5: " + getKontostand(con, 5));
+            System.out.println("Kontostand Account 5: " + getKontostand(5));
 
-            System.out.println("neuer Kontostand Account 5: " + insertEinzahlung(con, 5, 1, 1, 500));
-            System.out.println("neuer Kontostand Account 5: " + insertEinzahlung(con, 5, 1, 1, 500));
-            System.out.println("neuer Kontostand Account 5: " + insertEinzahlung(con, 5, 1, 1, 500));
+            System.out.println("neuer Kontostand Account 5: " + insertEinzahlung(5, 1, 1, 500));
+            System.out.println("neuer Kontostand Account 5: " + insertEinzahlung(5, 1, 1, 500));
+            System.out.println("neuer Kontostand Account 5: " + insertEinzahlung(5, 1, 1, 500));
 
-            System.out.println("Anzahl Einzahlung 500€: " + getAnzahlEinzahlung(con, 500));
+            System.out.println("Anzahl Einzahlung 500€: " + getAnzahlEinzahlung(500));
 
-            System.out.println("Kontostand Account 5: " + getKontostand(con, 5));
+            System.out.println("Kontostand Account 5: " + getKontostand(5));
+
+            getKontostandPrepared.close();
+            updateBrancheBalancePrepared.close();
+            updateTellerBalancePrepared.close();
+            updateAccountBalancePrepared.close();
+            insertTransactionIntoHistoryPrepared.close();
+            getAnzahlEinzahlungPrepared.close();
 
             con.close();
         }
@@ -114,73 +173,62 @@ public class LoadDriver
         {
             throw new RuntimeException(e);
         }
-
-
     }
 
     private int getRandomInt(int max)
     {
-        int range = max - 2;
-
-        return (int) (Math.random() * range) + 1;
+        return random.nextInt(max) + 1;
     }
 
-    private int getKontostand(Connection con, int ACCID) throws SQLException
+    private int getKontostand(int ACCID) throws SQLException
     {
-        Statement statement = con.createStatement();
+        this.getKontostandPrepared.setInt(1, ACCID);
+        ResultSet resultSet = this.getKontostandPrepared.executeQuery();
 
-        boolean execute = statement.execute("SELECT balance FROM accounts WHERE ACCID = " + ACCID);
-        
-        if(execute)
+        if(resultSet.next())
         {
-            ResultSet resultSet = statement.getResultSet();
-
-            if(resultSet.next())
-            {
-                return resultSet.getInt(1);
-            }
+            return resultSet.getInt(1);
         }
-
-        con.commit();
-
         return -1;
     }
 
-    private int insertEinzahlung(Connection con, int ACCID, int TELLERID, int BRANCHID, int DELTA) throws SQLException
+    private int insertEinzahlung(int ACCID, int TELLERID, int BRANCHID, int DELTA) throws SQLException
     {
-        Statement statement = con.createStatement();
+        this.updateBrancheBalancePrepared           .setInt(1, DELTA);
+        this.updateBrancheBalancePrepared           .setInt(2, BRANCHID);
 
-        statement.execute("UPDATE BRANCHES SET balance = balance + " + DELTA + " WHERE BRANCHID = " + BRANCHID);
-        statement.execute("UPDATE TELLERS  SET balance = balance + " + DELTA + " WHERE TELLERID = " + TELLERID);
-        statement.execute("UPDATE ACCOUNTS SET balance = balance + " + DELTA + " WHERE ACCID    = " + ACCID);
+        this.updateTellerBalancePrepared            .setInt(1, DELTA);
+        this.updateTellerBalancePrepared            .setInt(2, TELLERID);
 
-        int kontostand = getKontostand(con, ACCID);
+        this.updateAccountBalancePrepared           .setInt(1, DELTA);
+        this.updateAccountBalancePrepared           .setInt(2, ACCID);
 
-        statement.execute("INSERT INTO HISTORY (ACCID, TELLERID, DELTA, BRANCHID, ACCBALANCE, CMMNT) " +
-                                "VALUES (" + ACCID + ", " + TELLERID + ", " + DELTA + ", " + BRANCHID + ", " + kontostand + ", 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')");
+        this.updateBrancheBalancePrepared           .execute();
+        this.updateTellerBalancePrepared            .execute();
+        this.updateAccountBalancePrepared           .execute();
 
-        con.commit();
+        int kontostand = getKontostand(ACCID);
+
+        this.insertTransactionIntoHistoryPrepared   .setInt(1, ACCID);
+        this.insertTransactionIntoHistoryPrepared   .setInt(2, TELLERID);
+        this.insertTransactionIntoHistoryPrepared   .setInt(3, DELTA);
+        this.insertTransactionIntoHistoryPrepared   .setInt(4, BRANCHID);
+        this.insertTransactionIntoHistoryPrepared   .setInt(5, kontostand);
+
+        this.insertTransactionIntoHistoryPrepared   .execute();
 
         return kontostand;
     }
 
-    private int getAnzahlEinzahlung(Connection con, int DELTA) throws SQLException
+    private int getAnzahlEinzahlung(int DELTA) throws SQLException
     {
-        Statement statement = con.createStatement();
+        this.getAnzahlEinzahlungPrepared.setInt(1, DELTA);
+        ResultSet resultSet = this.getAnzahlEinzahlungPrepared.executeQuery();
 
-        boolean execute = statement.execute("SELECT COUNT(*) FROM history WHERE delta = " + DELTA);
-
-        if(execute)
+        if(resultSet.next())
         {
-            ResultSet resultSet = statement.getResultSet();
-
-            if(resultSet.next())
-            {
-                return resultSet.getInt(1);
-            }
+            return resultSet.getInt(1);
         }
-
-        con.commit();
 
         return 0;
     }

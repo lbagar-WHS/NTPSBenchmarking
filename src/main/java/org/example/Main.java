@@ -4,6 +4,9 @@ import Controller.BenchmarkController;
 import Loader.LoadDriver;
 
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Main
 {
@@ -49,7 +52,7 @@ public class Main
     public static void main(String[] args)
     {
         Scanner scanner = new Scanner(System.in);  // Create a Scanner object
-        int option = -1;
+        int option;
 
         do
         {
@@ -81,16 +84,45 @@ public class Main
 
     private static void testBenchmarkingMethod()
     {
-        LoadDriver driver = new LoadDriver();
+        LoadDriver driver = new LoadDriver("1", 1);
 
         driver.testExecuteFunction();
     }
 
     private static void startBenchmarking()
     {
-        LoadDriver driver = new LoadDriver();
+        LoadDriver.resetTotalTransactions();
 
-        driver.startBenchmarking();
+        try
+        {
+            ExecutorService executorService = Executors.newFixedThreadPool(5);
+
+            for (int i = 1; i <= 5; i++)
+            {
+                executorService.submit(new LoadDriver("" + i, i + 1));
+            }
+
+            executorService.shutdown();
+            executorService.awaitTermination(11, TimeUnit.MINUTES);
+
+            int totalKontostandTransactions         = LoadDriver.totalKontostandTransactions;
+            int totalAnzahlEinzahlungenTransactions = LoadDriver.totalAnzahlEinzahlungenTransactions;
+            int totalEinzahlungTransactions         = LoadDriver.totalEinzahlungTransactions;
+            int totalTransactions                   = totalKontostandTransactions + totalAnzahlEinzahlungenTransactions + totalEinzahlungTransactions;
+
+            System.out.println();
+            System.out.println("alle 5 Benchmarkings wurden abgeschlossen...");
+            System.out.println("Anzahl getKontostand:       " + totalKontostandTransactions         + " (" + ((float) totalKontostandTransactions           / totalTransactions) * 100 + "%)");
+            System.out.println("Anzahl getAnzahlEinzahlung: " + totalAnzahlEinzahlungenTransactions + " (" + ((float) totalAnzahlEinzahlungenTransactions   / totalTransactions) * 100 + "%)");
+            System.out.println("Anzahl insertEinzahlung:    " + totalEinzahlungTransactions         + " (" + ((float) totalEinzahlungTransactions           / totalTransactions) * 100 + "%)");
+            System.out.println("Anzahl Transaktionen:       " + totalTransactions);
+            System.out.println("Anzahl Transaktionen pro Sekunde pro Thread: " + totalTransactions / 60 / 5 / 5);
+            System.out.println();
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void deleteHistoryEntries()
